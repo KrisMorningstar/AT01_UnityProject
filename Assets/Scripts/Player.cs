@@ -6,8 +6,7 @@ using UnityEngine.EventSystems;
 
 public class Player : MonoBehaviour
 {
-    public GameObject _canvas;
-    GraphicRaycaster _raycaster;
+    [SerializeField]GraphicRaycaster _raycaster;
     PointerEventData _pointerEventData;
     EventSystem _eventSystem;
 
@@ -23,7 +22,6 @@ public class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _raycaster = _canvas.GetComponent<GraphicRaycaster>();
         _eventSystem = GetComponent<EventSystem>();
 
         foreach (Node node in GameManager.Instance.Nodes)
@@ -39,14 +37,43 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetButtonDown("Fire1"))
+        _pointerEventData = new PointerEventData(_eventSystem);
+        _pointerEventData.position = Input.mousePosition;
+        List<RaycastResult> results = new List<RaycastResult>();
+        if (_pointerEventData == null)
+        {
+            Debug.Log("Pointer is fucked dawg");
+        }
+        if (_raycaster == null)
+        {
+            Debug.Log("raycaster is fucked?");
+        }
+        if (results == null)
+        {
+            Debug.Log("No Results, Duh");
+        }
+        _raycaster.Raycast(_pointerEventData, results);
+        if (results == null)
+        {
+            Debug.Log("uh oh fucky wucky");
+        }
+
+        foreach (RaycastResult result in results)
+        {
+            Debug.Log("Hit " + result.gameObject.name);
+            // if object in UI which mouse is ver is tagged "Button"
+            /*if (result.gameObject.tag == "Button")
+            {
+                Debug.Log("It's ya boy...uh...skinny benis");
+            }*/
+        }
+        /*if (Input.GetButtonDown("Fire1"))
         {
             Debug.Log("Firing");
 
             _pointerEventData = new PointerEventData(_eventSystem);
             _pointerEventData.position = Input.mousePosition;
             List<RaycastResult> results = new List<RaycastResult>();
-            Debug.Log("about to cast");
             //Input.mousePosition, Vector3.forward, out ray,10f
             if(_pointerEventData == null)
             {
@@ -65,18 +92,17 @@ public class Player : MonoBehaviour
             {
                 Debug.Log("uh oh fucky wucky");
             }
-            Debug.Log("Just Casted");
 
             foreach (RaycastResult result in results)
             {
                 Debug.Log("Hit " + result.gameObject.name);
                 // if object in UI which mouse is ver is tagged "Button"
-                if (result.gameObject.tag == "Button")
+                /*if (result.gameObject.tag == "Button")
                 {
                     Debug.Log("It's ya boy...uh...skinny benis");
-                }
+                }*
             }
-        }
+        }*/
 
         if (moving == false)
         {
