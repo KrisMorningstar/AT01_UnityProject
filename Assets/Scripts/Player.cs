@@ -2,9 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class Player : MonoBehaviour
 {
+    public GameObject _canvas;
+    GraphicRaycaster _raycaster;
+    PointerEventData _pointerEventData;
+    EventSystem _eventSystem;
+
     //Define delegate types and events here
 
     public Node CurrentNode { get; private set; }
@@ -17,6 +23,9 @@ public class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        _raycaster = _canvas.GetComponent<GraphicRaycaster>();
+        _eventSystem = GetComponent<EventSystem>();
+
         foreach (Node node in GameManager.Instance.Nodes)
         {
             if(node.Parents.Length > 2 && node.Children.Length == 0)
@@ -32,7 +41,41 @@ public class Player : MonoBehaviour
     {
         if (Input.GetButtonDown("Fire1"))
         {
-            MouseInput();
+            Debug.Log("Firing");
+
+            _pointerEventData = new PointerEventData(_eventSystem);
+            _pointerEventData.position = Input.mousePosition;
+            List<RaycastResult> results = new List<RaycastResult>();
+            Debug.Log("about to cast");
+            //Input.mousePosition, Vector3.forward, out ray,10f
+            if(_pointerEventData == null)
+            {
+                Debug.Log("Pointer is fucked dawg");
+            }
+            if(_raycaster == null)
+            {
+                Debug.Log("raycaster is fucked?");
+            }
+            if(results == null)
+            {
+                Debug.Log("No Results, Duh");
+            }
+            _raycaster.Raycast(_pointerEventData, results);
+            if(results == null)
+            {
+                Debug.Log("uh oh fucky wucky");
+            }
+            Debug.Log("Just Casted");
+
+            foreach (RaycastResult result in results)
+            {
+                Debug.Log("Hit " + result.gameObject.name);
+                // if object in UI which mouse is ver is tagged "Button"
+                if (result.gameObject.tag == "Button")
+                {
+                    Debug.Log("It's ya boy...uh...skinny benis");
+                }
+            }
         }
 
         if (moving == false)
@@ -57,16 +100,7 @@ public class Player : MonoBehaviour
     
     public void MouseInput()
     {
-        RaycastHit ray;
-
-        if (Physics.Raycast(Input.mousePosition, Vector3.forward, out ray,10f))
-        {
-            // if object in UI which mouse is ver is tagged "Button"
-            if(ray.collider.gameObject.tag == "Button")
-            {
-                Debug.Log("It's ya boy...uh...skinny benis");
-            }
-        }
+        
     }
 
     // call the input directional method
