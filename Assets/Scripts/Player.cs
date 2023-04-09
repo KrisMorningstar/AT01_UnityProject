@@ -9,6 +9,27 @@ public class Player : MonoBehaviour
     [SerializeField]GraphicRaycaster _raycaster;
     PointerEventData _pointerEventData;
     EventSystem _eventSystem;
+    private List<Vector3> scanDirections = new List<Vector3>();
+    public LayerMask layerMask;
+
+    // NEEDS CLEANING
+    private bool directionsChecked;
+
+    [SerializeField]private GameObject directionParent;
+    private GameObject upArrow;
+    private GameObject downArrow;
+    private GameObject leftArrow;
+    private GameObject rightArrow;
+    private Color uColour;
+    private Color dColour;
+    private Color lColour;
+    private Color rColour;
+
+    [SerializeField] private GameObject upNode;
+    [SerializeField] private GameObject downNode;
+    [SerializeField] private GameObject leftNode;
+    [SerializeField] private GameObject rightNode;
+    // END OF UGLY
 
     //Define delegate types and events here
 
@@ -19,9 +40,38 @@ public class Player : MonoBehaviour
     private bool moving = false;
     private Vector3 currentDir;
 
+    private void Awake()
+    {
+        // UGLY, CLEAN UP
+        scanDirections.Add(Vector3.forward);
+        scanDirections.Add(Vector3.back);
+        scanDirections.Add(Vector3.left);
+        scanDirections.Add(Vector3.right);
+
+        upArrow = directionParent.transform.Find("Up").gameObject;
+        downArrow = directionParent.transform.Find("Down").gameObject;
+        leftArrow = directionParent.transform.Find("Left").gameObject;
+        rightArrow = directionParent.transform.Find("Right").gameObject;
+
+        uColour = upArrow.gameObject.GetComponent<Image>().color;
+        dColour = downArrow.gameObject.GetComponent<Image>().color;
+        lColour = leftArrow.gameObject.GetComponent<Image>().color;
+        rColour = rightArrow.gameObject.GetComponent<Image>().color;
+        // END OF UGLY
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        directionsChecked = false;
+        ResetDirections();
+
+        foreach(Vector3 dir in scanDirections)
+        {
+            DirectionScan(dir);
+            directionsChecked = true;
+        }
+
         _eventSystem = GetComponent<EventSystem>();
 
         foreach (Node node in GameManager.Instance.Nodes)
@@ -37,76 +87,24 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        _pointerEventData = new PointerEventData(_eventSystem);
-        _pointerEventData.position = Input.mousePosition;
-        List<RaycastResult> results = new List<RaycastResult>();
-        if (_pointerEventData == null)
-        {
-            Debug.Log("Pointer is fucked dawg");
-        }
-        if (_raycaster == null)
-        {
-            Debug.Log("raycaster is fucked?");
-        }
-        if (results == null)
-        {
-            Debug.Log("No Results, Duh");
-        }
-        _raycaster.Raycast(_pointerEventData, results);
-        if (results == null)
-        {
-            Debug.Log("uh oh fucky wucky");
-        }
+        //Debug.DrawLine(transform.position, (transform.position + new Vector3(10,0,0)), Color.blue);
 
-        foreach (RaycastResult result in results)
+        if (Input.GetMouseButtonDown(0))
         {
-            Debug.Log("Hit " + result.gameObject.name);
-            // if object in UI which mouse is ver is tagged "Button"
-            /*if (result.gameObject.tag == "Button")
-            {
-                Debug.Log("It's ya boy...uh...skinny benis");
-            }*/
+            MouseTest();
         }
-        /*if (Input.GetButtonDown("Fire1"))
-        {
-            Debug.Log("Firing");
-
-            _pointerEventData = new PointerEventData(_eventSystem);
-            _pointerEventData.position = Input.mousePosition;
-            List<RaycastResult> results = new List<RaycastResult>();
-            //Input.mousePosition, Vector3.forward, out ray,10f
-            if(_pointerEventData == null)
-            {
-                Debug.Log("Pointer is fucked dawg");
-            }
-            if(_raycaster == null)
-            {
-                Debug.Log("raycaster is fucked?");
-            }
-            if(results == null)
-            {
-                Debug.Log("No Results, Duh");
-            }
-            _raycaster.Raycast(_pointerEventData, results);
-            if(results == null)
-            {
-                Debug.Log("uh oh fucky wucky");
-            }
-
-            foreach (RaycastResult result in results)
-            {
-                Debug.Log("Hit " + result.gameObject.name);
-                // if object in UI which mouse is ver is tagged "Button"
-                /*if (result.gameObject.tag == "Button")
-                {
-                    Debug.Log("It's ya boy...uh...skinny benis");
-                }*
-            }
-        }*/
 
         if (moving == false)
         {
             //Implement inputs and event-callbacks here
+            if (!directionsChecked)
+            {
+                foreach (Vector3 dir in scanDirections)
+                {
+                    DirectionScan(dir);
+                    directionsChecked = true;
+                }
+            }
         }
         else
         {
@@ -132,7 +130,112 @@ public class Player : MonoBehaviour
     // call the input directional method
     // invoke change colour event
 
+    public void ResetDirections()
+    {
+        Debug.Log("resetting");
+        
+        uColour.a = .5f;
+        dColour.a = .5f;
+        lColour.a = .5f;
+        rColour.a = .5f;
+        upArrow.GetComponent<Image>().color = uColour;
+        downArrow.GetComponent<Image>().color = dColour;
+        leftArrow.GetComponent<Image>().color = lColour;
+        rightArrow.GetComponent<Image>().color = rColour;
 
+        upNode = null;
+        downNode = null;
+        leftNode = null;
+        rightNode = null;
+
+        directionsChecked = false;
+    }
+
+    public void DirectionScan(Vector3 direction)
+    {
+        RaycastHit hit;
+
+        if(Physics.Raycast(transform.position, direction, out hit, 10f, layerMask))
+        {
+            //Debug.Log(hit.collider.gameObject.name);
+            switch (direction)
+            {
+                case var value when value == Vector3.forward:
+                    Debug.Log("Can Go Forward");
+                    uColour.a = 1f;
+                    upArrow.GetComponent<Image>().color = uColour;
+                    upNode = hit.collider.gameObject;
+                    break;
+                case var value when value == Vector3.back:
+                    Debug.Log("Can Go backwards");
+                    dColour.a = 1f;
+                    downArrow.GetComponent<Image>().color = dColour;
+                    downNode = hit.collider.gameObject;
+                    break;
+                case var value when value == Vector3.left:
+                    Debug.Log("Can Go left");
+                    lColour.a = 1f;
+                    leftArrow.GetComponent<Image>().color = lColour;
+                    leftNode = hit.collider.gameObject;
+                    break;
+                case var value when value == Vector3.right:
+                    Debug.Log("Can Go right");
+                    rColour.a = 1f;
+                    rightArrow.GetComponent<Image>().color = rColour;
+                    rightNode = hit.collider.gameObject;
+                    break;
+
+            }
+        }
+    }
+
+    public void MouseTest()
+    {
+        _pointerEventData = new PointerEventData(_eventSystem);
+        _pointerEventData.position = Input.mousePosition;
+        List<RaycastResult> results = new List<RaycastResult>();
+        if (_pointerEventData == null)
+        {
+            Debug.Log("Pointer is fucked dawg");
+        }
+        if (_raycaster == null)
+        {
+            Debug.Log("raycaster is fucked?");
+        }
+        if (results == null)
+        {
+            Debug.Log("No Results, Duh");
+        }
+        _raycaster.Raycast(_pointerEventData, results);
+        if (results == null)
+        {
+            Debug.Log("uh oh fucky wucky");
+        }
+
+        foreach (RaycastResult result in results)
+        {
+            Debug.Log("Hit " + result.gameObject.name);
+            switch (result.gameObject)
+            {
+                case var value when value == upArrow:
+                    Debug.Log("moving forward");
+                    MoveToNode(upNode.GetComponent<Node>());
+                    break;
+                case var value when value == downArrow:
+                    Debug.Log("moving back");
+                    MoveToNode(downNode.GetComponent<Node>());
+                    break;
+                case var value when value == leftArrow:
+                    Debug.Log("moving left");
+                    MoveToNode(leftNode.GetComponent<Node>());
+                    break;
+                case var value when value == rightArrow:
+                    Debug.Log("moving right");
+                    MoveToNode(rightNode.GetComponent<Node>());
+                    break;
+            }
+        }
+    }
 
     /// <summary>
     /// Sets the players target node and current directon to the specified node.
@@ -145,6 +248,7 @@ public class Player : MonoBehaviour
             TargetNode = node;
             currentDir = TargetNode.transform.position - transform.position;
             currentDir = currentDir.normalized;
+            ResetDirections();
             moving = true;
         }
     }
