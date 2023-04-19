@@ -53,10 +53,10 @@ public class Player : MonoBehaviour
         leftArrow = directionParent.transform.Find("Left").gameObject;
         rightArrow = directionParent.transform.Find("Right").gameObject;
 
-        uColour = upArrow.gameObject.GetComponent<Image>().color;
-        dColour = downArrow.gameObject.GetComponent<Image>().color;
-        lColour = leftArrow.gameObject.GetComponent<Image>().color;
-        rColour = rightArrow.gameObject.GetComponent<Image>().color;
+        uColour = upArrow.gameObject.GetComponent<RawImage>().color;
+        dColour = downArrow.gameObject.GetComponent<RawImage>().color;
+        lColour = leftArrow.gameObject.GetComponent<RawImage>().color;
+        rColour = rightArrow.gameObject.GetComponent<RawImage>().color;
         // END OF UGLY
     }
 
@@ -138,10 +138,10 @@ public class Player : MonoBehaviour
         dColour.a = .5f;
         lColour.a = .5f;
         rColour.a = .5f;
-        upArrow.GetComponent<Image>().color = uColour;
-        downArrow.GetComponent<Image>().color = dColour;
-        leftArrow.GetComponent<Image>().color = lColour;
-        rightArrow.GetComponent<Image>().color = rColour;
+        upArrow.GetComponent<RawImage>().color = uColour;
+        downArrow.GetComponent<RawImage>().color = dColour;
+        leftArrow.GetComponent<RawImage>().color = lColour;
+        rightArrow.GetComponent<RawImage>().color = rColour;
 
         upNode = null;
         downNode = null;
@@ -163,25 +163,25 @@ public class Player : MonoBehaviour
                 case var value when value == Vector3.forward:
                     Debug.Log("Can Go Forward");
                     uColour.a = 1f;
-                    upArrow.GetComponent<Image>().color = uColour;
+                    upArrow.GetComponent<RawImage>().color = uColour;
                     upNode = hit.collider.gameObject;
                     break;
                 case var value when value == Vector3.back:
                     Debug.Log("Can Go backwards");
                     dColour.a = 1f;
-                    downArrow.GetComponent<Image>().color = dColour;
+                    downArrow.GetComponent<RawImage>().color = dColour;
                     downNode = hit.collider.gameObject;
                     break;
                 case var value when value == Vector3.left:
                     Debug.Log("Can Go left");
                     lColour.a = 1f;
-                    leftArrow.GetComponent<Image>().color = lColour;
+                    leftArrow.GetComponent<RawImage>().color = lColour;
                     leftNode = hit.collider.gameObject;
                     break;
                 case var value when value == Vector3.right:
                     Debug.Log("Can Go right");
                     rColour.a = 1f;
-                    rightArrow.GetComponent<Image>().color = rColour;
+                    rightArrow.GetComponent<RawImage>().color = rColour;
                     rightNode = hit.collider.gameObject;
                     break;
 
