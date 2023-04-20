@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
@@ -13,17 +14,15 @@ public class Player : MonoBehaviour
     public LayerMask layerMask;
 
     // NEEDS CLEANING
+    [SerializeField] private bool inputPressed;
     private bool directionsChecked;
+    private Color dpadColour;
 
     [SerializeField]private GameObject directionParent;
     private GameObject upArrow;
     private GameObject downArrow;
     private GameObject leftArrow;
     private GameObject rightArrow;
-    private Color uColour;
-    private Color dColour;
-    private Color lColour;
-    private Color rColour;
 
     [SerializeField] private GameObject upNode;
     [SerializeField] private GameObject downNode;
@@ -32,16 +31,25 @@ public class Player : MonoBehaviour
     // END OF UGLY
 
     //Define delegate types and events here
+    private PlayerInputActions playerInputActions;
+    private InputAction movement;
 
     public Node CurrentNode { get; private set; }
     public Node TargetNode { get; private set; }
 
     [SerializeField] private float speed = 4;
-    private bool moving = false;
+    [SerializeField] private bool moving = false;
     private Vector3 currentDir;
 
     private void Awake()
     {
+        Debug.Log("awake bool");
+        inputPressed = false;
+
+        playerInputActions = new PlayerInputActions();
+        movement = playerInputActions.Player.Movement;
+        movement.Enable();
+
         // UGLY, CLEAN UP
         scanDirections.Add(Vector3.forward);
         scanDirections.Add(Vector3.back);
@@ -53,10 +61,7 @@ public class Player : MonoBehaviour
         leftArrow = directionParent.transform.Find("Left").gameObject;
         rightArrow = directionParent.transform.Find("Right").gameObject;
 
-        uColour = upArrow.gameObject.GetComponent<RawImage>().color;
-        dColour = downArrow.gameObject.GetComponent<RawImage>().color;
-        lColour = leftArrow.gameObject.GetComponent<RawImage>().color;
-        rColour = rightArrow.gameObject.GetComponent<RawImage>().color;
+        dpadColour = upArrow.gameObject.GetComponent<RawImage>().color;
         // END OF UGLY
     }
 
@@ -87,15 +92,9 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //Debug.DrawLine(transform.position, (transform.position + new Vector3(10,0,0)), Color.blue);
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            MouseTest();
-        }
-
         if (moving == false)
         {
+
             //Implement inputs and event-callbacks here
             if (!directionsChecked)
             {
@@ -104,6 +103,18 @@ public class Player : MonoBehaviour
                     DirectionScan(dir);
                     directionsChecked = true;
                 }
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                MouseInput();
+            }
+
+            if (!inputPressed && movement.IsPressed())
+            {
+                Debug.Log("update true");
+                inputPressed = true;
+                InputResult(movement.ReadValue<Vector2>());
             }
         }
         else
@@ -115,33 +126,23 @@ public class Player : MonoBehaviour
             else
             {
                 moving = false;
+                Debug.Log("reset");
+                inputPressed = false;
                 CurrentNode = TargetNode;
             }
         }
     }
 
-    //Implement mouse interaction method here
-    
-    public void MouseInput()
-    {
-        
-    }
-
-    // call the input directional method
-    // invoke change colour event
 
     public void ResetDirections()
     {
         Debug.Log("resetting");
         
-        uColour.a = .5f;
-        dColour.a = .5f;
-        lColour.a = .5f;
-        rColour.a = .5f;
-        upArrow.GetComponent<RawImage>().color = uColour;
-        downArrow.GetComponent<RawImage>().color = dColour;
-        leftArrow.GetComponent<RawImage>().color = lColour;
-        rightArrow.GetComponent<RawImage>().color = rColour;
+        dpadColour.a = .5f;
+        upArrow.GetComponent<RawImage>().color = dpadColour;
+        downArrow.GetComponent<RawImage>().color = dpadColour;
+        leftArrow.GetComponent<RawImage>().color = dpadColour;
+        rightArrow.GetComponent<RawImage>().color = dpadColour;
 
         upNode = null;
         downNode = null;
@@ -157,31 +158,31 @@ public class Player : MonoBehaviour
 
         if(Physics.Raycast(transform.position, direction, out hit, 10f, layerMask))
         {
-            //Debug.Log(hit.collider.gameObject.name);
+            // Debug.Log(hit.collider.gameObject.name); -- For Testing
             switch (direction)
             {
                 case var value when value == Vector3.forward:
-                    Debug.Log("Can Go Forward");
-                    uColour.a = 1f;
-                    upArrow.GetComponent<RawImage>().color = uColour;
+                    // Debug.Log("Can Go Forward");     -- For Testing
+                    dpadColour.a = 1f;
+                    upArrow.GetComponent<RawImage>().color = dpadColour;
                     upNode = hit.collider.gameObject;
                     break;
                 case var value when value == Vector3.back:
-                    Debug.Log("Can Go backwards");
-                    dColour.a = 1f;
-                    downArrow.GetComponent<RawImage>().color = dColour;
+                    // Debug.Log("Can Go backwards");   -- For Testing
+                    dpadColour.a = 1f;
+                    downArrow.GetComponent<RawImage>().color = dpadColour;
                     downNode = hit.collider.gameObject;
                     break;
                 case var value when value == Vector3.left:
-                    Debug.Log("Can Go left");
-                    lColour.a = 1f;
-                    leftArrow.GetComponent<RawImage>().color = lColour;
+                    // Debug.Log("Can Go left");        -- For Testing
+                    dpadColour.a = 1f;
+                    leftArrow.GetComponent<RawImage>().color = dpadColour;
                     leftNode = hit.collider.gameObject;
                     break;
                 case var value when value == Vector3.right:
-                    Debug.Log("Can Go right");
-                    rColour.a = 1f;
-                    rightArrow.GetComponent<RawImage>().color = rColour;
+                    // Debug.Log("Can Go right");       -- For Testing
+                    dpadColour.a = 1f;
+                    rightArrow.GetComponent<RawImage>().color = dpadColour;
                     rightNode = hit.collider.gameObject;
                     break;
 
@@ -189,27 +190,26 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void MouseTest()
+    // call the input directional method
+    // invoke change colour event
+    public void MouseInput()
     {
         _pointerEventData = new PointerEventData(_eventSystem);
         _pointerEventData.position = Input.mousePosition;
         List<RaycastResult> results = new List<RaycastResult>();
+
         if (_pointerEventData == null)
         {
-            Debug.Log("Pointer is fucked dawg");
+            Debug.Log("Null Pointer Error");
         }
         if (_raycaster == null)
         {
-            Debug.Log("raycaster is fucked?");
-        }
-        if (results == null)
-        {
-            Debug.Log("No Results, Duh");
+            Debug.Log("Null Raycaster");
         }
         _raycaster.Raycast(_pointerEventData, results);
         if (results == null)
         {
-            Debug.Log("uh oh fucky wucky");
+            Debug.Log("No Results Found");
         }
 
         foreach (RaycastResult result in results)
@@ -218,23 +218,83 @@ public class Player : MonoBehaviour
             switch (result.gameObject)
             {
                 case var value when value == upArrow:
-                    Debug.Log("moving forward");
+                    // Debug.Log("moving forward"); -- For Testing
                     MoveToNode(upNode.GetComponent<Node>());
                     break;
                 case var value when value == downArrow:
-                    Debug.Log("moving back");
+                    // Debug.Log("moving back");    -- For Testing
                     MoveToNode(downNode.GetComponent<Node>());
                     break;
                 case var value when value == leftArrow:
-                    Debug.Log("moving left");
+                    // Debug.Log("moving left");    -- For Testing
                     MoveToNode(leftNode.GetComponent<Node>());
                     break;
                 case var value when value == rightArrow:
-                    Debug.Log("moving right");
+                    // Debug.Log("moving right");   -- For Testing
                     MoveToNode(rightNode.GetComponent<Node>());
                     break;
             }
         }
+    }
+
+    public void InputResult(Vector2 _input)
+    {
+        switch (_input)
+        {
+            case var value when value == Vector2.up:
+                if(upNode != null)
+                {
+                    MoveToNode(upNode.GetComponent<Node>());
+                    break;
+                }
+                else
+                {
+                    Debug.Log("Null");
+                    inputPressed = false;
+                }
+                break;
+            case var value when value == Vector2.down:
+                if (downNode != null)
+                {
+                    MoveToNode(downNode.GetComponent<Node>());
+                    break;
+                }
+                else
+                {
+                    Debug.Log("Null");
+                    inputPressed = false;
+                }
+                break;
+            case var value when value == Vector2.left:
+                if (leftNode != null)
+                {
+                    MoveToNode(leftNode.GetComponent<Node>());
+                    break;
+                }
+                else
+                {
+                    Debug.Log("Null");
+                    inputPressed = false;
+                }
+                break;
+            case var value when value == Vector2.right:
+                if (rightNode != null)
+                {
+                    MoveToNode(rightNode.GetComponent<Node>());
+                    break;
+                }
+                else
+                {
+                    Debug.Log("Null");
+                    inputPressed = false;
+                }
+                break;
+            //TEST A DEFAULT INSTEAD OF ELSES
+        }
+    }
+
+    public void NullResult()
+    {
     }
 
     /// <summary>
