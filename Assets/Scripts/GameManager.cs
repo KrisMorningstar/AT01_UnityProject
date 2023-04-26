@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance { get; private set; }
 
+    private bool isPaused;
+
     /// <summary>
     /// Awake is called before Start is executed for the first time.
     /// </summary>
@@ -25,6 +27,23 @@ public class GameManager : MonoBehaviour
             Instance = this;
         }
         FindObjectOfType<Enemy>().GameOverEvent += GameOver;
+        Player.PauseGameEvent += PauseGame;
+    }
+
+    private void PauseGame()
+    {
+        if (!isPaused)
+        {
+            Time.timeScale = 0;
+            Player.pauseScreen.SetActive(true);
+            isPaused = true;
+        }
+        else
+        {
+            Player.pauseScreen.SetActive(false);
+            Time.timeScale = 1;
+            isPaused = false;
+        }
     }
 
     /// <summary>

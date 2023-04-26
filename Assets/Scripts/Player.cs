@@ -7,67 +7,88 @@ using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
-    [SerializeField]GraphicRaycaster _raycaster;
+    // UI
+    public GameObject pauseScreen;
+
+    [SerializeField]GraphicRaycaster _graphicRaycaster;
     PointerEventData _pointerEventData;
     EventSystem _eventSystem;
-    private List<Vector3> scanDirections = new List<Vector3>();
-    public LayerMask layerMask;
 
-    // NEEDS CLEANING
-    [SerializeField] private bool inputPressed;
-    private bool directionsChecked;
-    private Color dpadColour;
-
-    [SerializeField]private GameObject directionParent;
+    [SerializeField] private GameObject directionParent;
     private GameObject upArrow;
     private GameObject downArrow;
     private GameObject leftArrow;
     private GameObject rightArrow;
+    private Color dpadColour;
 
-    [SerializeField] private GameObject upNode;
-    [SerializeField] private GameObject downNode;
-    [SerializeField] private GameObject leftNode;
-    [SerializeField] private GameObject rightNode;
-    // END OF UGLY
 
-    //Define delegate types and events here
+    // MOVEMENT
+    private List<Vector3> scanDirections = new List<Vector3>();
+    public LayerMask nodeMask;
+    private GameObject upNode;
+    private GameObject downNode;
+    private GameObject leftNode;
+    private GameObject rightNode;
+
+    private bool directionsChecked;
+    private bool inputPressed = false;
+    private bool moving = false;
+    [SerializeField] private float speed = 4;
+    private Vector3 currentDir;
+
+
+    // INPUTS
     private PlayerInputActions playerInputActions;
     private InputAction movement;
+    private InputAction pause;
 
+
+    // EVENTS & DELEGATES
+    public delegate void PauseGameDelegate();
+    public event PauseGameDelegate PauseGameEvent = delegate { };
+
+
+    // NODES
     public Node CurrentNode { get; private set; }
     public Node TargetNode { get; private set; }
 
-    [SerializeField] private float speed = 4;
-    [SerializeField] private bool moving = false;
-    private Vector3 currentDir;
+
 
     private void Awake()
     {
-        Debug.Log("awake bool");
-        inputPressed = false;
+        //Debug.Log("awake bool");  //-- For Testing
 
+        // PLAYER INPUTS
         playerInputActions = new PlayerInputActions();
         movement = playerInputActions.Player.Movement;
         movement.Enable();
+        pause = playerInputActions.Player.Pause;
+        pause.Enable();
 
-        // UGLY, CLEAN UP
+
+        // DIRECTIONS
         scanDirections.Add(Vector3.forward);
         scanDirections.Add(Vector3.back);
         scanDirections.Add(Vector3.left);
         scanDirections.Add(Vector3.right);
 
+
+        // UI ARROWS
         upArrow = directionParent.transform.Find("Up").gameObject;
         downArrow = directionParent.transform.Find("Down").gameObject;
         leftArrow = directionParent.transform.Find("Left").gameObject;
         rightArrow = directionParent.transform.Find("Right").gameObject;
 
         dpadColour = upArrow.gameObject.GetComponent<RawImage>().color;
-        // END OF UGLY
     }
+
+
 
     // Start is called before the first frame update
     void Start()
     {
+
+        _eventSystem = GetComponent<EventSystem>();
         directionsChecked = false;
         ResetDirections();
 
@@ -76,8 +97,6 @@ public class Player : MonoBehaviour
             DirectionScan(dir);
             directionsChecked = true;
         }
-
-        _eventSystem = GetComponent<EventSystem>();
 
         foreach (Node node in GameManager.Instance.Nodes)
         {
@@ -89,13 +108,18 @@ public class Player : MonoBehaviour
         }
     }
 
+
+
     // Update is called once per frame
     void Update()
     {
+        if (pause.WasPressedThisFrame())
+        {
+            PauseGameEvent.Invoke();
+        }
+
         if (moving == false)
         {
-
-            //Implement inputs and event-callbacks here
             if (!directionsChecked)
             {
                 foreach (Vector3 dir in scanDirections)
@@ -112,7 +136,7 @@ public class Player : MonoBehaviour
 
             if (!inputPressed && movement.IsPressed())
             {
-                Debug.Log("update true");
+                //Debug.Log("update true"); //-- For Testing
                 inputPressed = true;
                 InputResult(movement.ReadValue<Vector2>());
             }
@@ -125,8 +149,8 @@ public class Player : MonoBehaviour
             }
             else
             {
+                //Debug.Log("reset");   //-- For Testing
                 moving = false;
-                Debug.Log("reset");
                 inputPressed = false;
                 CurrentNode = TargetNode;
             }
@@ -134,10 +158,10 @@ public class Player : MonoBehaviour
     }
 
 
+
     public void ResetDirections()
     {
-        Debug.Log("resetting");
-        
+        //Debug.Log("resetting");   //-- For Testing
         dpadColour.a = .5f;
         upArrow.GetComponent<RawImage>().color = dpadColour;
         downArrow.GetComponent<RawImage>().color = dpadColour;
@@ -152,35 +176,37 @@ public class Player : MonoBehaviour
         directionsChecked = false;
     }
 
+
+
     public void DirectionScan(Vector3 direction)
     {
         RaycastHit hit;
 
-        if(Physics.Raycast(transform.position, direction, out hit, 10f, layerMask))
+        if(Physics.Raycast(transform.position, direction, out hit, 10f, nodeMask))
         {
-            // Debug.Log(hit.collider.gameObject.name); -- For Testing
+            // Debug.Log(hit.collider.gameObject.name); //-- For Testing
             switch (direction)
             {
                 case var value when value == Vector3.forward:
-                    // Debug.Log("Can Go Forward");     -- For Testing
+                    // Debug.Log("Can Go Forward");     //-- For Testing
                     dpadColour.a = 1f;
                     upArrow.GetComponent<RawImage>().color = dpadColour;
                     upNode = hit.collider.gameObject;
                     break;
                 case var value when value == Vector3.back:
-                    // Debug.Log("Can Go backwards");   -- For Testing
+                    // Debug.Log("Can Go backwards");   //-- For Testing
                     dpadColour.a = 1f;
                     downArrow.GetComponent<RawImage>().color = dpadColour;
                     downNode = hit.collider.gameObject;
                     break;
                 case var value when value == Vector3.left:
-                    // Debug.Log("Can Go left");        -- For Testing
+                    // Debug.Log("Can Go left");        //-- For Testing
                     dpadColour.a = 1f;
                     leftArrow.GetComponent<RawImage>().color = dpadColour;
                     leftNode = hit.collider.gameObject;
                     break;
                 case var value when value == Vector3.right:
-                    // Debug.Log("Can Go right");       -- For Testing
+                    // Debug.Log("Can Go right");       //-- For Testing
                     dpadColour.a = 1f;
                     rightArrow.GetComponent<RawImage>().color = dpadColour;
                     rightNode = hit.collider.gameObject;
@@ -189,6 +215,8 @@ public class Player : MonoBehaviour
             }
         }
     }
+
+
 
     // call the input directional method
     // invoke change colour event
@@ -202,11 +230,11 @@ public class Player : MonoBehaviour
         {
             Debug.Log("Null Pointer Error");
         }
-        if (_raycaster == null)
+        if (_graphicRaycaster == null)
         {
             Debug.Log("Null Raycaster");
         }
-        _raycaster.Raycast(_pointerEventData, results);
+        _graphicRaycaster.Raycast(_pointerEventData, results);
         if (results == null)
         {
             Debug.Log("No Results Found");
@@ -214,28 +242,34 @@ public class Player : MonoBehaviour
 
         foreach (RaycastResult result in results)
         {
-            Debug.Log("Hit " + result.gameObject.name);
+            //Debug.Log("Hit " + result.gameObject.name);   //-- For Testing
             switch (result.gameObject)
             {
                 case var value when value == upArrow:
-                    // Debug.Log("moving forward"); -- For Testing
+                    //Debug.Log("moving forward");  //-- For Testing
                     MoveToNode(upNode.GetComponent<Node>());
+                    StartCoroutine(Flash(upArrow));
                     break;
                 case var value when value == downArrow:
-                    // Debug.Log("moving back");    -- For Testing
+                    //Debug.Log("moving back");     //-- For Testing
                     MoveToNode(downNode.GetComponent<Node>());
+                    StartCoroutine(Flash(downArrow));
                     break;
                 case var value when value == leftArrow:
-                    // Debug.Log("moving left");    -- For Testing
+                    //Debug.Log("moving left");     //-- For Testing
                     MoveToNode(leftNode.GetComponent<Node>());
+                    StartCoroutine(Flash(leftArrow));
                     break;
                 case var value when value == rightArrow:
-                    // Debug.Log("moving right");   -- For Testing
+                    //Debug.Log("moving right");    //-- For Testing
                     MoveToNode(rightNode.GetComponent<Node>());
+                    StartCoroutine(Flash(rightArrow));
                     break;
             }
         }
     }
+
+
 
     public void InputResult(Vector2 _input)
     {
@@ -245,11 +279,12 @@ public class Player : MonoBehaviour
                 if(upNode != null)
                 {
                     MoveToNode(upNode.GetComponent<Node>());
+                    StartCoroutine(Flash(upArrow));
                     break;
                 }
                 else
                 {
-                    Debug.Log("Null");
+                    //Debug.Log("Null");    //-- For Testing
                     inputPressed = false;
                 }
                 break;
@@ -257,11 +292,12 @@ public class Player : MonoBehaviour
                 if (downNode != null)
                 {
                     MoveToNode(downNode.GetComponent<Node>());
+                    StartCoroutine(Flash(downArrow));
                     break;
                 }
                 else
                 {
-                    Debug.Log("Null");
+                    //Debug.Log("Null");    //-- For Testing
                     inputPressed = false;
                 }
                 break;
@@ -269,11 +305,12 @@ public class Player : MonoBehaviour
                 if (leftNode != null)
                 {
                     MoveToNode(leftNode.GetComponent<Node>());
+                    StartCoroutine(Flash(leftArrow));
                     break;
                 }
                 else
                 {
-                    Debug.Log("Null");
+                    //Debug.Log("Null");    //-- For Testing
                     inputPressed = false;
                 }
                 break;
@@ -281,21 +318,23 @@ public class Player : MonoBehaviour
                 if (rightNode != null)
                 {
                     MoveToNode(rightNode.GetComponent<Node>());
+                    StartCoroutine(Flash(rightArrow));
                     break;
                 }
                 else
                 {
-                    Debug.Log("Null");
+                    //Debug.Log("Null");    //-- For Testing
                     inputPressed = false;
                 }
                 break;
-            //TEST A DEFAULT INSTEAD OF ELSES
+            default:
+                Debug.LogWarning("Default: Input Error");  // Failsafe. Shouldn't be possible.
+                inputPressed = false;
+                break;
         }
     }
 
-    public void NullResult()
-    {
-    }
+
 
     /// <summary>
     /// Sets the players target node and current directon to the specified node.
@@ -311,5 +350,20 @@ public class Player : MonoBehaviour
             ResetDirections();
             moving = true;
         }
+    }
+
+
+
+    IEnumerator Flash(GameObject _arrow)
+    {
+        Color _colour;
+        _colour = _arrow.GetComponent<RawImage>().color;
+
+        _arrow.GetComponent<RawImage>().color = Color.green;
+        yield return new WaitForSeconds(.05f);
+
+        _arrow.GetComponent<RawImage>().color = dpadColour;
+
+        yield return null;
     }
 }

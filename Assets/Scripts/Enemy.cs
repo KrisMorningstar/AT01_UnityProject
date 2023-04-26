@@ -90,7 +90,7 @@ public class Enemy : MonoBehaviour
             searchingNode = unsearchedNodes[unsearchedNodes.Count-1];
             if(searchingNode == playerCurrent || searchingNode == playerTarget)
             {
-                Debug.Log("Found it");
+                //Debug.Log("Found Node");  //-- For Testing
                 currentNode = searchingNode;
                 currentDir = currentNode.transform.position - transform.position;
                 currentDir = currentDir.normalized;
